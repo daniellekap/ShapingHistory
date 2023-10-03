@@ -8,7 +8,6 @@ This repository contains the research and code for our thesis project on the aut
 - [Setup & Installation](#setup--installation)
 - [Usage](#usage)
 - [Results](#results)
-- [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
