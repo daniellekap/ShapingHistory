@@ -14,7 +14,6 @@ def generate_image_from_VAE(encoding_16, model):
         with torch.no_grad():
             return model.decoder(new_tab_long).squeeze()
 
-
 def generate_mean_tablet_plot(df, model, column_name, grid_title, save_path=None):
     """
     Visualize generated images in a grid layout with a big title above the grid and return a DataFrame
@@ -33,20 +32,23 @@ def generate_mean_tablet_plot(df, model, column_name, grid_title, save_path=None
     mean_encodings_df = pd.DataFrame()
 
     # Determine the number of rows needed for the grid
-    num_rows = len(primary_values) // 6 + (len(primary_values) % 6 > 0)
+    num_images = len(primary_values)
+    num_rows = num_images // 6 + (num_images % 6 > 0)
+    num_cols = min(num_images, 6)  # Use 6 or the number of images, whichever is smaller
 
     # Set up the figure and the axes grid for visualization
-    fig, axes = plt.subplots(nrows=num_rows, ncols=6, figsize=(20, num_rows * 3))
+    fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(20, num_rows * 3), squeeze=False)
     fig.suptitle(grid_title, fontsize=20, fontweight='bold')
+
+    # Flatten the axes array for easy iteration
+    axes_flat = axes.flatten()
 
     # Iterate over the primary values to generate images and collect data
     for idx, primary_value in enumerate(primary_values):
-        row, col = divmod(idx, 6)
-
         # Filter the dataframe for the current primary value
         filtered_df = df[df[column_name] == primary_value]
         period_mean = filtered_df.drop([column_name], axis=1).mean()
-        
+
         # Calculate the sample size for the current period
         sample_size = filtered_df.shape[0]
 
@@ -56,29 +58,27 @@ def generate_mean_tablet_plot(df, model, column_name, grid_title, save_path=None
         period_mean_df['Sample Size'] = sample_size  # Add the sample size column
         mean_encodings_df = pd.concat([mean_encodings_df, period_mean_df], ignore_index=True)
 
+        # Generate the image from the model
         generated_image = generate_image_from_VAE(period_mean, model)
-        
+
         # Plot the image in the grid
-        axes[row, col].imshow(generated_image.cpu().numpy(), cmap='gray')
-        axes[row, col].set_title(f'{primary_value} (n={sample_size})', fontsize=10)
-        axes[row, col].axis('off')
+        ax = axes_flat[idx]
+        ax.imshow(generated_image.cpu().numpy(), cmap='gray')
+        ax.set_title(f'{primary_value} (n={sample_size})', fontsize=10)
+        plt.tight_layout()
+        ax.axis('off')
 
-    # Hide any empty subplots if the number of primary values is not a multiple of 6
-    for j in range(idx + 1, num_rows * 6):
-        fig.delaxes(axes.flatten()[j])
+    # Hide any remaining unused subplots
+    for ax in axes_flat[num_images:]:
+        ax.axis('off')
 
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-
+    # Save the figure if a path is provided
     if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
+        plt.savefig(save_path, bbox_inches='tight')
+
     plt.show()
-
-    # Reorder the mean_encodings_df columns to have the primary value column first, followed by the sample size
-    cols = [column_name, 'Sample Size'] + [col for col in mean_encodings_df.columns if col not in [column_name, 'Sample Size']]
-    mean_encodings_df = mean_encodings_df[cols]
-
     return mean_encodings_df
+
 
 
 def hierarchical_clustering_and_dendrogram(df, class_column, title = None ,save_path=None):
