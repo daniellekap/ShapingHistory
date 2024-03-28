@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 
 
-def get_IDS(IMG_DIR='output/images', era=False, CATALOGUE_FN='output/cdli_catalogue_data.csv'):
+def get_IDS(IMG_DIR='output/images_preprocessed', era=False, CATALOGUE_FN='output/cdli_catalogue_data.csv'):
     img_fns = glob(os.path.join(IMG_DIR, '*.png'))
     IDS = [os.path.basename(fn).rstrip('.png') for fn in img_fns]
     if era:
@@ -28,7 +28,7 @@ class TabletEraDataset(Dataset):
         'iron': 2
     }
     
-    def __init__(self, CATALOGUE_FN='output/cdli_catalogue_data.csv', IMG_DIR='output/images', IDS=None):
+    def __init__(self, CATALOGUE_FN='output/cdli_catalogue_data.csv', IMG_DIR='output/images_preprocessed', IDS=None):
         self.id2era = pd.read_csv(
             CATALOGUE_FN, usecols=['id_text', 'era'], dtype={'id_text': object}
         ).dropna(subset=['era']).set_index('id_text').to_dict()['era']
@@ -308,4 +308,4 @@ class TabletPeriodDataset(Dataset):
             img = (img > 0.125).astype(np.float32) ### 0.25 was great for most besides the really dark ones
         
         
-        return img, self.PERIOD_INDICES.get(period, 0), self.GENRE_INDICES.get(genre, 8), self.PROVENIENCE_INDICES.get(provenience, 3) # 0: other
+        return ID, img, self.PERIOD_INDICES.get(period, 0), self.GENRE_INDICES.get(genre, 8), self.PROVENIENCE_INDICES.get(provenience, 3) # 0: other

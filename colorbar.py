@@ -83,7 +83,7 @@ class ColorbarTemplate:
         
         return max_val, best_top_left, best_bottom_right, best_scale
     
-    def erase_from_image(self, ref_img, threshold=0.8, crop_and_resize=True):
+    def erase_from_image(self, ref_img, threshold=0.8, crop_and_resize=False):
         max_val, top_left, bottom_right, best_scale = self.match_template_multiscale(ref_img)
         if max_val < threshold:
             return ref_img.copy()
