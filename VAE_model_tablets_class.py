@@ -3,86 +3,66 @@ from torch import nn
 from torch.nn import functional as F
 import pytorch_lightning as pl
 
-class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, logits=False, reduce=True):
-        super(FocalLoss, self).__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-        self.logits = logits
-        self.reduce = reduce
-
-    def forward(self, inputs, targets):
-        if self.logits:
-            BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
-        else:
-            BCE_loss = F.binary_cross_entropy(inputs, targets, reduction='none')
-        
-        pt = torch.exp(-BCE_loss)
-        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
-
-        if self.reduce:
-            return torch.mean(F_loss)
-        else:
-            return F_loss
-
 class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
+    def forward(self, x):
+        return x.view(x.size(0), -1)
 
 class UnFlatten(nn.Module):
-    def forward(self, input, size=256):
-        return input.view(input.size(0), size, 19, 14)
+    def forward(self, x):
+        # Adjusted to match the output of the encoder
+        return x.view(x.size(0), 256, 16, 16)  # Adjusted dimensions
 
 class VAE(pl.LightningModule):
-    def __init__(self, image_channels=1, h_dim=19*14*256, z_dim=32, lr=1e-3, use_classification_loss=True, 
-                 num_classes=None, loss_type="standard", class_weights=None, device = None):
-        
+    def __init__(self, image_channels=1, h_dim=16*16*256, z_dim=12, lr=1e-3, beta=1, use_classification_loss=True, 
+                 num_classes=None, loss_type="standard", class_weights=None, device=None):
         super(VAE, self).__init__()
         self.lr = lr
+        self.beta = beta
         self.use_classification_loss = use_classification_loss
         
+        # Adjusted encoder for 512x512 input
         self.encoder = nn.Sequential(
-            nn.Conv2d(image_channels, 32, kernel_size=5, stride=2, padding = 2),
+            nn.Conv2d(image_channels, 32, kernel_size=5, stride=2, padding=2),  # 256x256
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 64, kernel_size=5, stride=2, padding = 2),
+            nn.Conv2d(32, 64, kernel_size=5, stride=2, padding=2),  # 128x128
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.Conv2d(64, 128, kernel_size=5, stride=2, padding = 2),
+            nn.Conv2d(64, 128, kernel_size=5, stride=2, padding=2),  # 64x64
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.Conv2d(128, 256, kernel_size=10, stride=1, padding = 0),
+            nn.Conv2d(128, 256, kernel_size=5, stride=2, padding=2),  # 32x32
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(),
+            nn.Conv2d(256, 256, kernel_size=5, stride=2, padding=2),  # 16x16
             nn.BatchNorm2d(256),
             nn.LeakyReLU(),
             Flatten()
         )
         
-        self.fc1 = nn.Linear(h_dim, z_dim)
-        self.fc2 = nn.Linear(h_dim, z_dim)
-        self.fc3 = nn.Linear(z_dim, h_dim)
+        self.fc1 = nn.Linear(h_dim, z_dim)  # For mu
+        self.fc2 = nn.Linear(h_dim, z_dim)  # For logvar
+        self.fc3 = nn.Linear(z_dim, h_dim)  # For reconstruction
         
+        # Adjusted decoder for reconstructing 512x512 output
         self.decoder = nn.Sequential(
             UnFlatten(),
-            nn.ConvTranspose2d(256, 128, kernel_size=10, stride=1, padding = 0),
+            nn.ConvTranspose2d(256, 256, kernel_size=5, stride=2, padding=2, output_padding=1),  # 32x32
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(),
+            nn.ConvTranspose2d(256, 128, kernel_size=5, stride=2, padding=2, output_padding=1),  # 64x64
             nn.BatchNorm2d(128),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding = 2),
+            nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding=2, output_padding=1),  # 128x128
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2, padding = 2),
+            nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2, padding=2, output_padding=1),  # 256x256
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, image_channels, kernel_size=5, stride=2, padding = 2, output_padding=1),
-            nn.BatchNorm2d(1),
+            nn.ConvTranspose2d(32, image_channels, kernel_size=5, stride=2, padding=2, output_padding=1),  # 512x512
+            nn.BatchNorm2d(image_channels),
             nn.Sigmoid(),
         )
-      
-        # self.loss_type = loss_type
-        # if loss_type == "weighted":
-        #     self.class_weights = torch.tensor(class_weights).to(device)  # pass class_weights as a list, like [0.1, 0.9]
-        #     self.criterion = nn.CrossEntropyLoss(weight=self.class_weights)
-        # elif loss_type == "focal":
-        #     self.criterion = FocalLoss()
 
         self.loss_type = loss_type
         if use_classification_loss:
@@ -106,6 +86,61 @@ class VAE(pl.LightningModule):
                 nn.Linear(z_dim, num_classes),
                 nn.Softmax(dim=1)
             )
+            
+# class Flatten(nn.Module):
+#     def forward(self, input):
+#         return input.view(input.size(0), -1)
+
+# class UnFlatten(nn.Module):
+#     def forward(self, input, size=256):
+#         return input.view(input.size(0), size, 19, 14)
+
+# class VAE(pl.LightningModule):
+#     def __init__(self, image_channels=1, h_dim=19*14*256, z_dim=32, lr=1e-3, beta=1, use_classification_loss=True, 
+#                  num_classes=None, loss_type="standard", class_weights=None, device = None):
+        
+#         super(VAE, self).__init__()
+#         self.lr = lr
+#         self.beta=beta
+#         self.use_classification_loss = use_classification_loss
+        
+#         self.encoder = nn.Sequential(
+#             nn.Conv2d(image_channels, 32, kernel_size=5, stride=2, padding = 2),
+#             nn.BatchNorm2d(32),
+#             nn.LeakyReLU(),
+#             nn.Conv2d(32, 64, kernel_size=5, stride=2, padding = 2),
+#             nn.BatchNorm2d(64),
+#             nn.LeakyReLU(),
+#             nn.Conv2d(64, 128, kernel_size=5, stride=2, padding = 2),
+#             nn.BatchNorm2d(128),
+#             nn.LeakyReLU(),
+#             nn.Conv2d(128, 256, kernel_size=10, stride=1, padding = 0),
+#             nn.BatchNorm2d(256),
+#             nn.LeakyReLU(),
+#             Flatten()
+#         )
+        
+#         self.fc1 = nn.Linear(h_dim, z_dim)
+#         self.fc2 = nn.Linear(h_dim, z_dim)
+#         self.fc3 = nn.Linear(z_dim, h_dim)
+        
+#         self.decoder = nn.Sequential(
+#             UnFlatten(),
+#             nn.ConvTranspose2d(256, 128, kernel_size=10, stride=1, padding = 0),
+#             nn.BatchNorm2d(128),
+#             nn.LeakyReLU(),
+#             nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding = 2),
+#             nn.BatchNorm2d(64),
+#             nn.LeakyReLU(),
+#             nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2, padding = 2),
+#             nn.BatchNorm2d(32),
+#             nn.LeakyReLU(),
+#             nn.ConvTranspose2d(32, image_channels, kernel_size=5, stride=2, padding = 2, output_padding=1),
+#             nn.BatchNorm2d(1),
+#             nn.Sigmoid(),
+#         )
+      
+
 
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
@@ -133,14 +168,9 @@ class VAE(pl.LightningModule):
     
     def loss_function(self,recons,x,mu,logvar):
         # Account for the minibatch samples from the dataset; M_N = self.params['batch_size']/ self.num_train_imgs
-        kld_weight = 0.5
-        
-#         recons_loss =F.mse_loss(recons, input)
         recons_loss =F.mse_loss(recons, x,reduction="sum")
-
-#         kld_loss = torch.mean(-0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp(), dim = 1), dim = 0)
         kld_loss = torch.sum(-0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp(), dim = 1), dim = 0)
-        loss = recons_loss + kld_weight * kld_loss
+        loss = recons_loss + self.beta * kld_loss
         return loss
 
     def classification_loss(self, logits, labels):
@@ -158,14 +188,13 @@ class VAE(pl.LightningModule):
         
         recon, mu, logvar = outputs[:3]
         recon_loss = self.loss_function(recon, x, mu, logvar)
-        total_loss = recon_loss
         
         if self.use_classification_loss:
             class_logits = outputs[3]
             class_loss = self.classification_loss(class_logits, y)
-            total_loss += class_loss
             self.log('train_class_loss', class_loss)
-            
+
+        total_loss = 0.5 * recon_loss + 0.5 * class_loss
         self.log('train_recon_loss', recon_loss)
         self.log('train_total_loss', total_loss)
         return total_loss
@@ -179,14 +208,13 @@ class VAE(pl.LightningModule):
         
         recon, mu, logvar = outputs[:3]
         recon_loss = self.loss_function(recon, x, mu, logvar)
-        total_loss = recon_loss
         
         if self.use_classification_loss:
             class_logits = outputs[3]
             class_loss = self.classification_loss(class_logits, y)
-            total_loss += class_loss
             self.log('val_class_loss', class_loss)
-            
+
+        total_loss = 0.5 * recon_loss + 0.5 * class_loss
         self.log('val_recon_loss', recon_loss)
         self.log('val_total_loss', total_loss)
         return total_loss
