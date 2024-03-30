@@ -1,0 +1,15 @@
+seaborn
+scikit-learn
+requests
+scipy
+torch
+ipywidgets
+xgboost
+lime
+Pillow
+joblib
+matplotlib
+numpy
+opencv-python-headless
+pytorch-lightning
+tqdm
