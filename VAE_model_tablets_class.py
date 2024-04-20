@@ -86,62 +86,7 @@ class VAE(pl.LightningModule):
                 nn.Linear(z_dim, num_classes),
                 nn.Softmax(dim=1)
             )
-            
-# class Flatten(nn.Module):
-#     def forward(self, input):
-#         return input.view(input.size(0), -1)
-
-# class UnFlatten(nn.Module):
-#     def forward(self, input, size=256):
-#         return input.view(input.size(0), size, 19, 14)
-
-# class VAE(pl.LightningModule):
-#     def __init__(self, image_channels=1, h_dim=19*14*256, z_dim=32, lr=1e-3, beta=1, use_classification_loss=True, 
-#                  num_classes=None, loss_type="standard", class_weights=None, device = None):
-        
-#         super(VAE, self).__init__()
-#         self.lr = lr
-#         self.beta=beta
-#         self.use_classification_loss = use_classification_loss
-        
-#         self.encoder = nn.Sequential(
-#             nn.Conv2d(image_channels, 32, kernel_size=5, stride=2, padding = 2),
-#             nn.BatchNorm2d(32),
-#             nn.LeakyReLU(),
-#             nn.Conv2d(32, 64, kernel_size=5, stride=2, padding = 2),
-#             nn.BatchNorm2d(64),
-#             nn.LeakyReLU(),
-#             nn.Conv2d(64, 128, kernel_size=5, stride=2, padding = 2),
-#             nn.BatchNorm2d(128),
-#             nn.LeakyReLU(),
-#             nn.Conv2d(128, 256, kernel_size=10, stride=1, padding = 0),
-#             nn.BatchNorm2d(256),
-#             nn.LeakyReLU(),
-#             Flatten()
-#         )
-        
-#         self.fc1 = nn.Linear(h_dim, z_dim)
-#         self.fc2 = nn.Linear(h_dim, z_dim)
-#         self.fc3 = nn.Linear(z_dim, h_dim)
-        
-#         self.decoder = nn.Sequential(
-#             UnFlatten(),
-#             nn.ConvTranspose2d(256, 128, kernel_size=10, stride=1, padding = 0),
-#             nn.BatchNorm2d(128),
-#             nn.LeakyReLU(),
-#             nn.ConvTranspose2d(128, 64, kernel_size=5, stride=2, padding = 2),
-#             nn.BatchNorm2d(64),
-#             nn.LeakyReLU(),
-#             nn.ConvTranspose2d(64, 32, kernel_size=5, stride=2, padding = 2),
-#             nn.BatchNorm2d(32),
-#             nn.LeakyReLU(),
-#             nn.ConvTranspose2d(32, image_channels, kernel_size=5, stride=2, padding = 2, output_padding=1),
-#             nn.BatchNorm2d(1),
-#             nn.Sigmoid(),
-#         )
-      
-
-
+ 
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
         eps = torch.randn_like(std).to(std.device)
