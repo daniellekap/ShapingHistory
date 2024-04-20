@@ -52,7 +52,7 @@ def generate_mean_tablet_plot(df, model, column_name, grid_title, save_path=None
 
         ax = axes_flat[idx]
         ax.imshow(generated_image.cpu().numpy(), cmap='gray')
-        ax.set_title(f'{primary_value} (n={sample_size})', fontsize=10)
+        ax.set_title(f'{primary_value} (n={sample_size})', fontsize=15)
         plt.tight_layout()
         ax.axis('off')
 
