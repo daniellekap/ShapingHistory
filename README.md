@@ -38,11 +38,12 @@ Cuneiform writing from ancient Mesopotamia offers invaluable insights into ancie
    - Explore the data with notebooks 2 and 2.1, including viewing sample images and analyzing the height-width ratio of tablets.
 
 3. **Model Training and Evaluation**:
-   - CNN models: Train on greyscale images with notebook 4 and on masked images with notebook 5. Evaluate these models with notebooks 4.1 and 5.1 respectively.
-   - ResNet50 models: Train on greyscale images with notebook 6 and on masked images with notebook 7. Evaluate with notebooks 6.1 and 7.1.
-   - VAE model: Explore with notebook 8, analyze bottleneck vectors in notebook 9, and perform clustering and classification in notebook 10. Further analysis in notebooks 10.1 and 11. Notebook 12 allows exploration of shape evolution between periods.
+   - DinoV2 - vits14: Extract features for the greyscale images using notebook 3, and for the masked images using notebook 4. Run an XGB model over the features of the greyscale images and evaluate using notebook 3.1, and for the masked images using notebook 4.1
+   - CNN models: Train on greyscale images with notebook 6 and on masked images with notebook 7. Evaluate these models with notebooks 6.1 and 7.1 respectively.
+   - ResNet50 models: Train on greyscale images with notebook 8 and masked images with notebook 9. Evaluate with notebooks 8.1 and 9.1. To train and predict using the "era" as a dependent variable instead of "period", use notebooks 4 and 4.1.
+   - VAE model: Explore with notebook 10, analyze bottleneck vectors in notebook 10.1, and perform clustering and classification in notebook 11. Further analysis in notebooks 11.1 and 12. Notebook 13 allows exploration of shape evolution between periods.
 
-4. **Code Structure**: 
+5. **Code Structure**: 
    - Data structure and models are detailed in `era_data.py`, `era_model.py`, and `VAE_model_tablets_class.py`.
    - Visualization and colorbar removal functionalities are in `visualization_funcs.py` and `colorbar.py`.
 
@@ -50,8 +51,8 @@ Cuneiform writing from ancient Mesopotamia offers invaluable insights into ancie
 
 ## Results
 
-The different model results can be found in notebooks 4.1 (CNN-greyscale), 5.1 (CNN-masked), 6.1 (ResNet50 Greyscale), 7.1 (ResNet50 - Masked) and 10 (VAE - masked)
-VAE model performance metrics, visualizations, and comparisons with traditional methods can be found in notebook no. 10
+The different model results can be found in notebooks 6.1 (CNN-greyscale), 7.1 (CNN-masked), 8.1 (ResNet50 Greyscale), 9.1 (ResNet50 - Masked) and 11 (VAE - masked)
+VAE model performance metrics, visualizations, and comparisons with traditional methods can be found in notebook no. 11.1
 
 ## Acknowledgements
 
