@@ -76,24 +76,52 @@ def hierarchical_clustering_and_dendrogram(df, class_column, title = None ,save_
     :param class_column: The name of the column with the class (label)
     :param save_path: Path to save the dendrogram image (optional)
     """
+
+    EARLY_BRONZE = {
+        'Old Akkadian', 'Ur III',
+        'ED IIIb', 'Uruk III',
+        'Proto-Elamite', 'Lagash II',
+        'Ebla', 'ED IIIa', 'ED I-II',
+        'Uruk IV', 'Linear Elamite',
+        'Harappan'
+    }
+    MID_LATE_BRONZE = {
+        'Early Old Babylonian',
+        'Old Babylonian', 'Old Assyrian',
+        'Middle Babylonian', 'Middle Assyrian',
+        'Middle Elamite', 'Middle Hittite'
+    }
+    IRON = {
+        'Neo-Babylonian', 'Neo-Assyrian',
+        'Achaemenid', 'Hellenistic',
+        'Neo-Elamite'
+    }
+    ERA_MAP = {
+        **{K: '3rd mil. BCE' for K in EARLY_BRONZE},
+        **{K: '2nd mil. BCE' for K in MID_LATE_BRONZE},
+        **{K: '1st mil. BCE' for K in IRON},
+    }
+
+    # Preparing the features and labels for clustering
     features = df.drop(columns=[class_column, "Sample Size"])
     X = features.values
-    labels =  [f"{char} - {num} samples" for char, num in zip(df[class_column].values, df['Sample Size'].values)]
+    labels = [f"{period} - {num} samples - {ERA_MAP.get(period, 'Unknown era')}" for period, num in zip(df[class_column].values, df['Sample Size'].values)]
     Z = linkage(X, 'ward')
 
+    # Plotting the dendrogram
     plt.figure(figsize=figsize)
-    plt.title('Hierarchical Clustering Dendrogram - ' + title, fontsize = title_font_size)
+    plt.title('Hierarchical Clustering Dendrogram - ' + (title if title else ''), fontsize=title_font_size)
     plt.xlabel('')
     plt.ylabel('Distance')
-
     dendrogram(
         Z,
         leaf_rotation=90.,
         leaf_font_size=12.,
         labels=labels,
-        show_contracted=True,  
+        show_contracted=True,
     )
 
+    # Saving the plot if a save path is provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 

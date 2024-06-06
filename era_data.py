@@ -79,7 +79,7 @@ class TabletPeriodDataset(Dataset):
         'Hellenistic': 17,
         'ED I-II': 18,
         'Middle Elamite': 19,
-        'Middle Hittite': 20,
+        'Hittite': 20,
         'Uruk IV': 21
     }
 
