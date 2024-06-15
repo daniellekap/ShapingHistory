@@ -2,6 +2,8 @@
 Tablets
 This GitHub repository focuses on the intersection of Assyriology and machine learning, particularly through the digitization and analysis of ancient cuneiform tablets. Utilizing advanced techniques like Convolutional Neural Networks (CNNs) and Variational Auto-Encoders (VAEs), the project aims to enhance the precision of dating these tablets by examining their physical shapes. The codebase includes notebooks and Python files detailing methods for preprocessing tablet images, exploratory data analysis, and the development of machine learning models to identify patterns in tablet shapes, offering tools for Assyriologists to aid in their research.
 
+Publication: https://arxiv.org/abs/2406.04039 
+
 ## Table of Contents
 
 - [Introduction](#introduction)
