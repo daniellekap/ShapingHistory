@@ -60,4 +60,3 @@ VAE model performance metrics, visualizations, and comparisons with traditional 
 - Dr. Michael Fire of Ben Gurion University of the Negev and Dr. Shai Gording of Ariel University, for their invaluable guidance and insights.
 -  Ben Gurion University of the Negev, for allowing this research.
 -  Morris Alper, for his help in kicking this project off
-- All open-source tools and libraries used in this project.
